@@ -1,0 +1,1587 @@
+openapi: "3.0.0"
+info:
+  title: User API
+  version: "1.0.0"
+  description: API documentation for holiday planning 
+servers:
+  - url: https://holidayplanner.onrender.com
+  - url: http://localhost:8800
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    contactReply:
+      type: object
+      required:
+        - contactId
+        - reply
+        - subject
+      properties:
+        contactId:
+          type: string
+          example: "65351a0ab0f03f321b7d736d" # Replace with an actual contact ID
+        subject:
+          type: string
+          example: "type the subject  of message" # Replace with the reply message
+        reply:
+          type: string
+          example: "type a  reply message here" # Replace with the reply messagereply:
+  
+    booking:
+      type: object
+      properties:
+        
+        tourId:
+          type: string
+          example: "65351a0ab0f03f321b7d736d"
+        isPayed:
+          type: boolean
+          example: false
+        paymentMethod:
+          type: string
+          enum: ["credit_card", "paypal", "bank_transfer"]
+          example: "credit_card"
+        numberOfTickets:
+          type: number
+          example: 2 # Replace with the actual number of tickets
+        Date:
+              type: string
+              example: "2023-11-03T12:34:56.789Z"   
+        status:
+          type: string
+          example: "pending" # You can set a different example value
+      required:
+        - userId
+        - userEmail
+        - tourId
+        - paymentMethod  
+    User:
+      type: object
+      required:
+        - fullNames
+        - email
+        - password
+        - Date
+      properties:
+        fullNames:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phoneNumber:
+          type: number
+        location:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+      example:
+        fullNames: kayigire erneste
+        email: kayigireerneste@gmail.com
+        password: password
+        phoneNumber: 1234567890
+        location: kigali Rwanda
+        role: admin
+    UserSignupRequest:
+      type: object
+      required:
+        - fullNames
+        - email
+        - password
+      properties:
+        fullNames:
+          type: string
+          example: kayigire erneste
+        email:
+          type: string
+          example: kayigireerneste@gmail.com
+        password:
+          type: string
+          example: password2
+        phoneNumber:
+          type: number
+          example: 787795163
+        location:
+          type: string
+          example: kigali
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          example: kayigireerneste@gmail.com
+        password:
+          type: string
+          example: password2
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        access_token:
+          type: string
+        user:
+          type: object
+          properties:
+            email:
+              type: string
+            location:
+              type: string
+            fullname:
+              type: string
+            phone:
+              type: number
+            password:
+              type: string
+            role:
+              type: string
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentpassword
+        - newpassword
+      properties:
+        currentpassword:
+          type: string
+          example: password2
+        newpassword:
+          type: string
+          example: password2
+    Tour:
+      type: object
+      required:
+        - destination
+        - title
+        - description
+        - duration
+        - groupSize
+        - price
+        - tourType
+        - departure
+        - seats
+        - fromMonth
+        - toMonth
+        - departureTime
+        - returnTime
+        - image
+      properties:
+        destination:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        duration:
+          type: number
+        groupSize:
+          type: number
+        price:
+          type: number
+        discount:
+          type: number
+          default: 0
+        tourType:
+          type: string
+        departure:
+          type: string
+        seats:
+          type: number
+        fromMonth:
+          type: string
+        toMonth:
+          type: string
+        departureTime:
+          type: string
+          format: date-time
+        returnTime:
+          type: string
+          format: date-time
+        image:
+          type: string
+          format: binary
+        gallery:
+          type: array
+          items:
+          type: string
+          format: binary
+        priceIncluded:
+          type: array
+          items:
+            type: string
+        priceNotIncluded:
+          type: array
+          items:
+    Testimony:
+      type: object
+      required:
+        - userId
+        - userEmail
+        - rating
+        - body
+      properties:
+        userId:
+          type: string
+          format: uuid
+        userEmail:
+          type: string
+          format: email
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        body:
+          type: string
+      example:
+        rating: 5
+        body: "Great service!"
+    Contact:
+     type: object
+     properties:
+       message:
+         type: string
+         example: "This is a sample message from a user"
+       reply:
+         type: string
+         example: "This is a sample reply from admin"
+      
+       
+    ContactUpdate:
+      type: object
+      properties:
+        reply:
+          type: string
+          example: "Updated reply from admin"
+       
+paths:
+  /auth/signup:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignupRequest'
+      responses:
+        '200':
+          description: Successfully registered
+        '409':
+          description: Email already exists
+  /contact/reply/{id}:
+    post:
+      summary: Reply to a contact request
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the contact to reply to
+          required: true
+          schema:
+            type: string
+          example: "65351a0ab0f03f321b7d736d" # Replace with an actual contact ID
+      requestBody:
+        description: Reply details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/contactReply'
+      responses:
+        '202':
+          description: Reply made successfully
+        '404':
+          description: Error response 
+  /auth/signup:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignupRequest'
+      responses:
+        '200':
+          description: Successfully registered
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      summary: Authenticate user and get an access token. Copy it and paste it in the top right corner in the authorize button as you will need it for other actions based on your access token.
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        200:
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        401:
+          description: Wrong password
+        404:
+          description: User not found
+
+  /auth/changepassword:
+    post:
+      summary: Change the password of a user. You will need to login first, copy the access token provided, and paste it in the top right corner in the authorize button.
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        200:
+          description: Password changed successfully
+        401:
+          description: Current password is wrong
+        404:
+          description: User not found
+        500:
+          description: Server error
+
+  /auth/deleteuser/{id}:
+    delete:
+      summary: Delete a user by ID
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: User ID to be deleted
+      responses:
+        200:
+          description: User deleted successfully
+        404:
+          description: No user found with the given ID
+        500:
+          description: Server error
+
+  /auth:
+    get:
+      summary: Retrieve a list of all users
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Successfully retrieved list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error
+  /auth/findone/{id}:
+    get:
+      summary: Retrieve a given userby  its id
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: User id to be searched  
+      responses:
+        200:
+          description: Successfully retrieved list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error          
+
+  /tour:
+    get:
+      summary: Retrieve a list of all tours
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Successfully retrieved list of tours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tour'
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error
+  
+    post:
+      summary: Insert a new tour
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                destination:
+                  type: string
+                  example: kigali
+                  description: Destination of the tour
+                title:
+                  type: string
+                  example: seeing the beauty of rwanda
+                description:
+                  type: string
+                  example: observing  natural forests thousand hill and so on
+                duration:
+                  type: number
+                  example: 4
+                groupSize:
+                  type: number
+                  example: 5
+                price:
+                  type: number
+                  example: 6
+                discount:
+                  type: number
+                  example: 7
+                tourType:
+                  type: string
+                  example: summer
+                departure:
+                  type: string
+                  example: kampla
+                seats:
+                  type: number
+                  example: 20
+                fromMonth:
+                  type: string
+                  example: month1
+                toMonth:
+                  type: string
+                  example: month2
+                departureTime:
+                  type: string
+                  format: date-time
+                returnTime:
+                  type: string
+                  format: date-time
+                image:
+                  type: string
+                  format: binary
+                  description: Image file for the tour
+                gallery:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                priceIncluded:
+                  type: array
+                  items:
+                    type: string
+                priceNotIncluded:
+                  type: array
+                  items:
+                    type: string
+              required:
+                 - destination
+                 - title
+                 - description
+                 - duration
+                 - groupSize
+                 - price
+                 - tourType
+                 - departure
+                 - seats
+                 - fromMonth
+                 - toMonth
+                 - departureTime
+                 - returnTime
+                 - image 
+                 - gallery
+                 - priceIncluded
+                 - priceNotIncluded
+                 - discount    
+      responses:
+        200:
+          description: Tour inserted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tour'
+        400:
+          description: Bad request, possibly due to missing fields or incorrect data format
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error
+
+  /tour/findone/{userId}:
+    get:
+      summary: Find a single tour by User ID
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which tour is to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the tour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tour'
+        404:
+          description: No tour found for the given user ID
+        500:
+          description: Server error
+  /tour/findmany/{userId}:
+    get:
+      summary: Find all tours associated with a User ID
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which tours are to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the tours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tour'
+        404:
+          description: No tours found for the given user ID
+        500:
+          description: Server error
+  /auth/updateuserbyid/{id}:
+    patch:
+      summary: Update user details by ID
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: User ID to be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullNames:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                phoneNumber:
+                  type: number
+                location:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, admin]
+                  default: user
+      responses:
+        200:
+          description: User updated successfully
+        400:
+          description: Bad request (e.g., missing required data)
+        404:
+          description: User not found with the given ID
+        500:
+          description: Server error        
+  /tour/findbyid/{id}:
+    get:
+      summary: find a given tour using it id
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: id of  tour you want to find
+      responses:
+        200:
+          description: Successfully retrieved the tour
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tour'
+        404:
+          description: No tours found for the given  id
+        500:
+          description: Server error
+
+
+  /tour/delete/{id}:
+    delete:
+      summary: Delete a tour by its ID
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the tour to be deleted
+      responses:
+        200:
+          description: Tour deleted successfully
+        404:
+          description: No tour found with the given ID
+        500:
+          description: Server error
+
+  /tour/deletemany/{userId}:
+    delete:
+      summary: Delete all tours associated with a User ID
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which all tours are to be deleted
+      responses:
+        200:
+          description: Tours deleted successfully
+        404:
+          description: No tours found for the given user ID
+        500:
+          description: Server error
+  /tour/update/{id}:
+    patch:
+      summary: Update a specific tour by its ID
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the tour to be updated
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                destination:
+                  type: string
+                  description: Destination of the tour
+                title:
+                  type: string
+                  description: Title of the tour
+                description:
+                  type: string
+                  description: Detailed description of the tour
+                duration:
+                  type: number
+                  description: Duration of the tour in days
+                groupSize:
+                  type: number
+                  description: Size of the group for the tour
+                price:
+                  type: number
+                  description: Price of the tour
+                discount:
+                  type: number
+                  description: Available discount for the tour
+                tourType:
+                  type: string
+                  description: Type of the tour (e.g., adventure, relaxation)
+                departure:
+                  type: string
+                  description: Departure location of the tour
+                seats:
+                  type: number
+                  description: Number of available seats for the tour
+                fromMonth:
+                  type: string
+                  description: Starting month of the tour
+                toMonth:
+                  type: string
+                  description: Ending month of the tour
+                departureTime:
+                  type: string
+                  format: date-time
+                  description: Departure time of the tour
+                returnTime:
+                  type: string
+                  format: date-time
+                  description: Return time of the tour
+                image:
+                  type: string
+                  format: binary
+                  description: Image file for the tour
+                gallery:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Additional gallery images (URLs or file paths)
+                priceIncluded:
+                  type: array
+                  items:
+                    type: string
+                  description: List of items included in the price
+                priceNotIncluded:
+                  type: array
+                  items:
+                    type: string
+                  description: List of items not included in the price
+              required:
+                 - destination
+                 - title
+                 - description
+                 - duration
+                 - groupSize
+                 - price
+                 - tourType
+                 - departure
+                 - seats
+                 - fromMonth
+                 - toMonth
+                 - departureTime
+                 - returnTime
+                 - image 
+                 - gallery
+                 - priceIncluded
+                 - priceNotIncluded
+                 - discount    
+      responses:
+        200:
+          description: Tour updated successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized request
+        404:
+          description: No tour found with the given ID
+        500:
+          description: Server error
+  /tour/updatemany/{userId}:
+    patch:
+      summary: Update multiple tours associated with a specific User ID
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: ID of the user whose tours are to be updated
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                destination:
+                  type: string
+                  description: Destination of the tours
+                title:
+                  type: string
+                  description: Title of the tours
+                description:
+                  type: string
+                  description: Detailed description of the tours
+                duration:
+                  type: number
+                  description: Duration of the tours in days
+                groupSize:
+                  type: number
+                  description: Size of the group for the tours
+                price:
+                  type: number
+                  description: Price of the tours
+                discount:
+                  type: number
+                  description: Available discount for the tours
+                tourType:
+                  type: string
+                  description: Type of the tours (e.g., adventure, relaxation)
+                departure:
+                  type: string
+                  description: Departure location of the tours
+                seats:
+                  type: number
+                  description: Number of available seats for the tours
+                fromMonth:
+                  type: string
+                  description: Starting month of the tours
+                toMonth:
+                  type: string
+                  description: Ending month of the tours
+                departureTime:
+                  type: string
+                  format: date-time
+                  description: Departure time of the tours
+                returnTime:
+                  type: string
+                  format: date-time
+                  description: Return time of the tours
+                image:
+                  type: string
+                  format: binary
+                  description: Image file for the tours
+                gallery:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Additional gallery images (URLs or file paths)
+                priceIncluded:
+                  type: array
+                  items:
+                    type: string
+                  description: List of items included in the price
+                priceNotIncluded:
+                  type: array
+                  items:
+                    type: string
+                  description: List of items not included in the price
+              required:
+                 - destination
+                 - title
+                 - description
+                 - duration
+                 - groupSize
+                 - price
+                 - tourType
+                 - departure
+                 - seats
+                 - fromMonth
+                 - toMonth
+                 - departureTime
+                 - returnTime
+                 - image 
+                 - gallery
+                 - priceIncluded
+                 - priceNotIncluded
+                 - discount    
+      responses:
+        200:
+          description: Tours updated successfully for the given User ID
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized request
+        404:
+          description: No tours found for the given User ID
+        500:
+          description: Server error
+  /tour/search:
+    post:
+      summary: Search for specific tours based on user criteria
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      description: This endpoint allows users to search for tours based on a specific field and value.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                field:
+                  type: string
+                  description: The field in the tour model to search by. For example, "destination".
+                  example: "destination"
+                value:
+                  type: string
+                  description: The value to search for in the specified field.
+                  example: "kigali"
+      responses:
+        200:
+          description: Successfully retrieved search results.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Search results"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tour'
+        400:
+          description: Bad request, possibly due to missing fields or incorrect data format.
+        500:
+          description: Server error while searching for tours.
+  /testmony:
+    get:
+      summary: Retrieve all testimonies
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Successfully retrieved list of testimonies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Testimony'
+        500:
+          description: Server error
+
+    post:
+      summary: Insert a new testimony
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Testimony'
+      responses:
+        200:
+          description: Testimony added successfully
+        400:
+          description: Bad request
+        500:
+          description: Server error
+  /testmony/findone/{userId}:
+    get:
+      summary: Find a single testimony by User ID
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which testimony is to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the testimony
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Testimony'
+        404:
+          description: No testimony found for the given user ID
+        500:
+          description: Server error
+  /testmony/findmany/{userId}:
+    get:
+      summary: Find many testimonies by User ID
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which testimony is to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the testimony
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Testimony'
+        404:
+          description: No testimony found for the given user ID
+        500:
+          description: Server error
+  /testmony/delete/{id}:
+    delete:
+      summary: Delete a specific testimony by its ID
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the testimony to be deleted
+      responses:
+        200:
+          description: Testimony deleted successfully
+        404:
+          description: No testimony found with the given ID
+        500:
+          description: Server error
+
+  /testmony/deletemany/{userId}:
+    delete:
+      summary: Delete all testimonies associated with a specific User ID
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which all testimonies are to be deleted
+      responses:
+        200:
+          description: Testimonies deleted successfully for the given User ID
+        404:
+          description: No testimonies found for the given User ID
+        500:
+          description: Server error
+
+  /testmony/update/{id}:
+    patch:
+      summary: Update a specific testimony by its ID
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the testimony to be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Testimony'
+      responses:
+        200:
+          description: Testimony updated successfully
+        400:
+          description: Bad request
+        404:
+          description: No testimony found with the given ID
+        500:
+          description: Server error
+
+  /testmony/updatemany/{userId}:
+    patch:
+      summary: Update multiple testimonies associated with a specific User ID
+      tags: [Testimony]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: ID of the user whose testimonies are to be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Testimony'
+      responses:
+        200:
+          description: Testimonies updated successfully for the given User ID
+        400:
+          description: Bad request
+        404:
+          description: No testimonies found for the given User ID
+        500:
+          description: Server error
+  /book:
+    get:
+      summary: Retrieve all bookings
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Successfully retrieved list of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/booking'
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error
+
+    post:
+      summary: Create a new booking
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/booking'
+      responses:
+        200:
+          description: Booking created successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error
+
+  /book/findone/{userId}:
+    get:
+      summary: Retrieve a booking by User ID
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID of the booking to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/booking'
+        404:
+          description: No booking found for the given user ID
+        500:
+          description: Server error
+
+  /book/findmany/{userId}:
+    get:
+      summary: Retrieve all bookings by User ID
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which bookings are to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/booking'
+        404:
+          description: No bookings found for the given user ID
+        500:
+          description: Server error
+
+  /book/delete/{id}:
+    delete:
+      summary: Delete a specific booking by its ID
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the booking to be deleted
+      responses:
+        200:
+          description: Booking deleted successfully
+        404:
+          description: No booking found with the given ID
+        500:
+          description: Server error
+
+  /book/deletemany/{userId}:
+    delete:
+      summary: Delete all bookings associated with a specific User ID
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which all bookings are to be deleted
+      responses:
+        200:
+          description: Bookings deleted successfully
+        404:
+          description: No bookings found for the given user ID
+        500:
+          description: Server error 
+  /book/update/{id}:
+    patch:
+      summary: Update a booking
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID  booking  to be updated  
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/booking'
+      responses:
+        200:
+          description: Booking updated successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error
+  /book/approveBooking/{id}:
+    patch:
+      summary: approove a booking
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: booking ID for which all approving is going to take place  
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/booking'
+      responses:
+        200:
+          description: Booking updated successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error
+        
+
+  /book/updatemany/{userId}:
+    patch:
+      summary: Update multiple bookings associated with a specific User ID
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which bookings are to be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/booking'
+      responses:
+        200:
+          description: Bookings updated successfully
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized request
+        500:
+          description: Server error        
+  /contact:
+    post:
+      summary: Insert a new contact
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contact'
+      responses:
+        200:
+          description: Contact added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        400:
+          description: Bad request
+        500:
+          description: Server error
+
+    get:
+      summary: Retrieve all contacts
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Successfully retrieved list of contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+        500:
+          description: Server error
+          
+  /contact/delete/{id}:
+    delete:
+      summary: Delete a specific contact by its ID
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the contact to be deleted
+      responses:
+        200:
+          description: Contact deleted successfully
+        404:
+          description: No contact found with the given ID
+        500:
+          description: Server error
+
+  /contact/deletemany/{userId}:
+    delete:
+      summary: Delete all contacts associated with a specific User ID
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which all contacts are to be deleted
+      responses:
+        200:
+          description: Contacts deleted successfully for the given User ID
+        404:
+          description: No contacts found for the given User ID
+        500:
+          description: Server error
+
+  /contact/findone/{userId}:
+    get:
+      summary: Find a single contact by User ID
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which contact is to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the contact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        404:
+          description: No contact found for the given user ID
+        500:
+          description: Server error
+
+  /contact/findmany/{userId}:
+    get:
+      summary: Find many contacts by User ID
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID for which contacts are to be retrieved
+      responses:
+        200:
+          description: Successfully retrieved the contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+        404:
+          description: No contacts found for the given user ID
+        500:
+          description: Server error
+
+  /contact/update/{id}:
+    patch:
+      summary: Update a specific contact by its ID
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the contact to be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactUpdate'
+      responses:
+        200:
+          description: Contact updated successfully
+        400:
+          description: Bad request
+        404:
+          description: No contact found with the given ID
+        500:
+          description: Server error
+
+  /contact/updateMany/{userId}:
+    patch:
+      summary: Update multiple contacts associated with a specific User ID
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: ID of the user whose contacts are to be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactUpdate'
+      responses:
+        200:
+          description: Contacts updated successfully for the given User ID
+        400:
+          description: Bad request
+        404:
+          description: No contacts found for the given User ID
+        500:
+          description: Server error        
+  
+  
