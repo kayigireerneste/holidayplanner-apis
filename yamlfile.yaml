@@ -4,8 +4,8 @@ info:
   version: "1.0.0"
   description: API documentation for holiday planning 
 servers:
-  - url: https://holidayplanner.onrender.com
   - url: http://localhost:8800
+  - url: https://holidayplanner.onrender.com
 components:
   securitySchemes:
     bearerAuth:
